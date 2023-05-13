@@ -1,3 +1,7 @@
+require("tokyonight").setup({
+    style = "storm"
+})
+
 function ColorMyPencils(color)
 --    color = color or "catppuccin-macchiato"
 --    vim.cmd.colorscheme(color)
@@ -7,9 +11,6 @@ function ColorMyPencils(color)
 
     color = color or "tokyonight"
 
-    require("tokyonight").setup({
-        style = "storm"
-    })
     vim.cmd.colorscheme(color)
 
 end
