@@ -5,39 +5,17 @@ vim.cmd.packadd('packer.nvim')
 
 return require('packer').startup(function(use)
     -- Packer can manage itself
-    use 'wbthomason/packer.nvim'
+    use { 'wbthomason/packer.nvim' }
 
     use {
-        'nvim-telescope/telescope.nvim', tag = '0.1.0',
-        -- or                            , branch = '0.1.x',
-        requires = { {'nvim-lua/plenary.nvim'} }
-    }
-
-    --use({
-    --    'rose-pine/neovim',
-    --    as = 'rose-pine',
-    --    config = function()
-    --        vim.cmd('colorscheme rose-pine')
-    --    end
-    -- })
-
-    --use ({
-    --    "catppuccin/nvim",
-    --    as = "catppuccin",
-    --    config = function()
-    --        vim.cmd('colorscheme catppuccin-macchiato')
-    --    end
-    --})
-
-    use({
         'folke/tokyonight.nvim',
         as = 'tokyonight',
         config = function()
             vim.cmd('colorscheme tokyonight-storm')
         end,
-    })
+    }
 
-    use({
+    use {
       "folke/trouble.nvim",
       config = function()
           require("trouble").setup {
@@ -47,14 +25,16 @@ return require('packer').startup(function(use)
               -- refer to the configuration section below
           }
       end
-    })
+    }
 
-    use({"nvim-treesitter/nvim-treesitter", run = ":TSUpdate"})
-    use('nvim-treesitter/playground')
-    use('theprimeagen/harpoon')
-    use('mbbill/undotree')
-    use("tpope/vim-fugitive")
-    use("nvim-treesitter/nvim-treesitter-context");
+    use { "folke/zen-mode.nvim" }
+    use { 'nvim-telescope/telescope.nvim', requires = { {'nvim-lua/plenary.nvim'} } }
+    use { "nvim-treesitter/nvim-treesitter", run = ":TSUpdate" }
+    use { 'nvim-treesitter/playground' }
+    use { 'theprimeagen/harpoon' }
+    use { 'mbbill/undotree' }
+    use { "tpope/vim-fugitive" }
+    use { "nvim-treesitter/nvim-treesitter-context" };
 
     use {
         'VonHeikemen/lsp-zero.nvim',
@@ -78,14 +58,28 @@ return require('packer').startup(function(use)
         }
     }
 
-    use("folke/zen-mode.nvim")
-
-    use({
+    use {
         "jose-elias-alvarez/null-ls.nvim",
         config = function()
             require("null-ls").setup()
         end,
         requires = { "nvim-lua/plenary.nvim" },
-    })
+    }
 
 end)
+
+    --use({
+    --    'rose-pine/neovim',
+    --    as = 'rose-pine',
+    --    config = function()
+    --        vim.cmd('colorscheme rose-pine')
+    --    end
+    -- })
+
+    --use ({
+    --    "catppuccin/nvim",
+    --    as = "catppuccin",
+    --    config = function()
+    --        vim.cmd('colorscheme catppuccin-macchiato')
+    --    end
+    --})
