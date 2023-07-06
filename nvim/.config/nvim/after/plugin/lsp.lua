@@ -6,6 +6,7 @@ lsp.ensure_installed({
   'tsserver',
   'eslint',
   'rust_analyzer',
+  'omnisharp',
 })
 
 -- Fix Undefined global 'vim'
@@ -18,7 +19,6 @@ lsp.configure('lua-language-server', {
         }
     }
 })
-
 
 local cmp = require('cmp')
 local cmp_select = {behavior = cmp.SelectBehavior.Select}
