@@ -4,6 +4,11 @@ if not null_ls_status_ok then
 end
 
 local formatting = null_ls.builtins.formatting
+-- 'yamlfmt',
+-- 'xmlformatter',
+-- 'sqlfmt',
+--
+-- 'black',
 
 null_ls.setup({
     debug = false,
