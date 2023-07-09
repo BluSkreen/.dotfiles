@@ -3,27 +3,24 @@ local lsp = require("lsp-zero")
 lsp.preset("recommended")
 
 lsp.ensure_installed({
-    'tsserver',
-    'eslint',
-    'rust_analyzer',
     'lua_ls',
-    'csharp_ls',
-    'ansiblels',
-    'bashls',
-    'black',
-    'clojure_lsp',
-    'cmake',
-    'cssls',
-    'docker_compose_language_service',
-    'dockerls',
-    'gopls',
-    'pylsp',
-    'sqlfmt',
-    'svelte',
+    'tsserver',
+    'rust_analyzer',
     'tailwindcss',
-    'xmlformatter',
+    'cssls',
+    --'svelte',
+    'gopls',
+    --'ocamllsp',
+    --'cmake',
+    --'pylsp', -- gross
+    --'csharp_ls', -- ewww
+    --'clojure_lsp', -- some day...
+    'dockerls',
+    'docker_compose_language_service',
     'yamlls',
-    'yamlfmt'
+    --'ansiblels',
+    'bashls',
+    -- 'eslint',
 })
 
 -- Fix Undefined global 'vim'
