@@ -101,3 +101,13 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
 # source ~/.zsh_profile
+
+# opam configuration
+[[ ! -r /Users/bluescreen/.opam/opam-init/init.zsh ]] || source /Users/bluescreen/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null
+
+
+# Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
+export PATH="$PATH:$HOME/.rvm/bin"
+export PATH="/usr/local/opt/openssl/bin:$PATH"
+source ~/.rvm/scripts/rvm
+export PATH="/usr/local/opt/postgresql@13/bin:$PATH"
