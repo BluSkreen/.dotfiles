@@ -5,15 +5,16 @@ lsp.preset("recommended")
 lsp.ensure_installed({
     'lua_ls',
     'tsserver',
+    'ruby_ls',
     'rust_analyzer',
     'tailwindcss',
     'cssls',
     --'svelte',
     'gopls',
-    --'ocamllsp',
+    'ocamllsp',
     --'cmake',
     --'pylsp', -- gross
-    --'csharp_ls', -- ewww
+    'csharp_ls', -- ewww
     --'clojure_lsp', -- some day...
     'dockerls',
     'docker_compose_language_service',
@@ -67,8 +68,8 @@ lsp.on_attach(function(client, bufnr)
     vim.keymap.set("n", "gd", function() vim.lsp.buf.definition() end, opts)
     vim.keymap.set("n", "gt", function() vim.lsp.buf.type_definition() end, opts)
     vim.keymap.set("n", "gi", function() vim.lsp.buf.implementation() end, opts)
-    vim.keymap.set("n", "<leader>dj", function() vim.diagnostic.goto_next() end, opts)
-    vim.keymap.set("n", "<leader>dk", function() vim.diagnostic.goto_prev() end, opts)
+    vim.keymap.set("n", "<leader>dn", function() vim.diagnostic.goto_next() end, opts)
+    vim.keymap.set("n", "<leader>dp", function() vim.diagnostic.goto_prev() end, opts)
     vim.keymap.set("n", "<leader>dl", "<cmd>Telescope diagnostics<cr>", opts)
     vim.keymap.set("n", "<leader>vws", function() vim.lsp.buf.workspace_symbol() end, opts)
     vim.keymap.set("n", "<leader>vd", function() vim.diagnostic.open_float() end, opts)
