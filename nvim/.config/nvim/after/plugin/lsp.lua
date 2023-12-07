@@ -12,6 +12,7 @@ lsp.ensure_installed({
     --'svelte',
     'gopls',
     'ocamllsp',
+    'clangd',
     --'cmake',
     --'pylsp', -- gross
     'csharp_ls', -- ewww
@@ -31,6 +32,21 @@ lsp.configure('lua_ls', {
             diagnostics = {
                 globals = { 'vim' }
             }
+        }
+    }
+})
+
+lsp.configure('tailwindcss', {
+    settings = {
+        tailwindCSS = {
+          experimental = {
+            classRegex = {  -- for haml :D
+              "%\\w+([^\\s]*)",
+              "\\.([^\\.]*)",
+              ":class\\s*=>\\s*\"([^\"]*)",
+              "class:\\s+\"([^\"]*)"
+            }
+          }
         }
     }
 })
