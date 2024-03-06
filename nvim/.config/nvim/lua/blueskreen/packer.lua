@@ -11,7 +11,10 @@ return require('packer').startup(function(use)
         'folke/tokyonight.nvim',
         as = 'tokyonight',
         config = function()
-            vim.cmd('colorscheme tokyonight-storm')
+            -- vim.cmd('colorscheme tokyonight-storm')
+            require("tokyonight").setup({
+              style = "moon",
+            })
         end,
     }
 

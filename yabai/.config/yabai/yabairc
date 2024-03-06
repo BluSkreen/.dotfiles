@@ -47,14 +47,18 @@ yabai -m config window_gap 15
 
 # apps to not manage (ignore)
 yabai -m rule --add app="^System Settings$" manage=off
+yabai -m rule --add app="^Preview$" manage=off
 yabai -m rule --add app="^Finder$" manage=off
+yabai -m rule --add app="^Spacedrive$" manage=off
 yabai -m rule --add app="^Archive Utility$" manage=off
-yabai -m rule --add app="^Wally$" manage=off
-yabai -m rule --add app="^Pika$" manage=off
-yabai -m rule --add app="^balenaEtcher$" manage=off
-yabai -m rule --add app="^Creative Cloud$" manage=off
+
+yabai -m rule --add app="^Synergy$" manage=off
+yabai -m rule --add app="^ProtonVPN$" manage=off
 yabai -m rule --add app="^Logi Options$" manage=off
 yabai -m rule --add app="^Alfred Preferences$" manage=off
+yabai -m rule --add app="^balenaEtcher$" manage=off
+
+yabai -m rule --add app="^Pika$" manage=off
 yabai -m rule --add app="Raycast" manage=off
 
 echo "yabai configuration loaded.."
