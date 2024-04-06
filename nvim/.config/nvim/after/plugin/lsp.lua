@@ -5,25 +5,26 @@ lsp.preset("recommended")
 lsp.ensure_installed({
     'lua_ls',
     'tsserver',
-    'ruby_ls',
-    'rust_analyzer',
     'tailwindcss',
     'cssls',
-    --'svelte',
+    'ruby_ls',
+    'rust_analyzer',
     'gopls',
-    'ocamllsp',
     'clangd',
-    --'cmake',
-    --'pylsp', -- gross
-    'csharp_ls', -- ewww
-    --'clojure_lsp', -- some day...
-    'dockerls',
-    'docker_compose_language_service',
+    'cmake',
     'yamlls',
-    --'ansiblels',
     'bashls',
-    -- 'eslint',
+    'ansiblels',
+    'eslint',
 })
+-- 'sorbet',
+--'svelte',
+--'ocamllsp',
+--'pylsp', -- gross
+--'csharp_ls', -- ewww
+--'clojure_lsp', -- some day...
+--'dockerls',
+--'docker_compose_language_service',
 
 -- Fix Undefined global 'vim'
 lsp.configure('lua_ls', {
@@ -39,14 +40,23 @@ lsp.configure('lua_ls', {
 lsp.configure('tailwindcss', {
     settings = {
         tailwindCSS = {
-          experimental = {
-            classRegex = {  -- for haml :D
-              "%\\w+([^\\s]*)",
-              "\\.([^\\.]*)",
-              ":class\\s*=>\\s*\"([^\"]*)",
-              "class:\\s+\"([^\"]*)"
+            includeLanguages = {
+              haml = "html"
+            },
+            experimental = {
+              classRegex = {
+                { "class: ?\"([^\"]*)\"", "([a-zA-Z0-9\\-:]+)" },
+                { "(\\.[\\w\\-.]+)[\\n\\=\\{\\s]", "([\\w\\-]+)" },
+              }
             }
-          }
+            --experimental = {
+            --  classRegex = {  -- for haml :D
+            --    "%\\w+([^\\s]*)",
+            --    "\\.([^\\.]*)",
+            --    ":class\\s*=>\\s*\"([^\"]*)",
+            --    "class:\\s+\"([^\"]*)"
+            --  }
+            --}
         }
     }
 })
