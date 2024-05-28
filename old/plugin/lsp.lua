@@ -7,7 +7,7 @@ lsp.ensure_installed({
     'tsserver',
     'tailwindcss',
     'cssls',
-    'ruby_ls',
+    'ruby_lsp',
     'rust_analyzer',
     'gopls',
     'clangd',
