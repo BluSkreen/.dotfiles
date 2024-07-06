@@ -12,6 +12,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup({
-    spec = "blueskreen.lazy",
+    spec = "json3b.lazy",
     change_detection = { notify = false }
 })
