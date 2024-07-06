@@ -1,16 +1,15 @@
 import = ["~/.config/alacritty/tokyonight_storm.toml",]
 
 [env]
-  TERM = "xterm-256color"
+TERM = "xterm-256color"
 
 [window]
-
 decorations = "Transparent"
 padding = { x = 15, y = 25 }
 dynamic_padding = true
 
 [font]
-normal = { family = "FiraCode NFM" }
+normal = { family = "FiraCode Nerd Font Mono" }
 size = 14
 
 [mouse]

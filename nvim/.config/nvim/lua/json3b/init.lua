@@ -1,10 +1,10 @@
-require("blueskreen.set")
-require("blueskreen.remap")
-require("blueskreen.lazy_init")
+require("json3b.set")
+require("json3b.remap")
+require("json3b.lazy_init")
 
 -- Primeagens lazy setup
 local augroup = vim.api.nvim_create_augroup
-local ThePrimeagenGroup = augroup('blueskreen', {})
+local ThePrimeagenGroup = augroup('json3b', {})
 
 local autocmd = vim.api.nvim_create_autocmd
 local yank_group = augroup('HighlightYank', {})
