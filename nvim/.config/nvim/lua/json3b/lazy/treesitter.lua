@@ -7,7 +7,7 @@ return {
       ensure_installed = {
         "vimdoc", "vim", "javascript", "typescript", "ruby", "c", "cpp",
         "lua", "rust", "sql", "go", "dockerfile", "css", "html",
-        "clojure", "graphql", "json", "yaml", "jsdoc", "bash", "templ",
+        "clojure", "graphql", "json", "yaml", "jsdoc", "bash", "templ", "make"
       },
 
       -- Install parsers synchronously (only applied to `ensure_installed`)
