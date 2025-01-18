@@ -145,25 +145,35 @@ return {
         --  }
         --end,
 
-        --["gopls"] = function()
-        --  local lspconfig = require "lspconfig"
-        --  lspconfig.gopls.setup {
-        --    capabilities = capabilities,
-        --    settings = {
-        --      gopls = {
-        --        hints = {
-        --          assignVariableTypes = true,
-        --          compositeLiteralFields = true,
-        --          compositeLiteralTypes = true,
-        --          constantValues = true,
-        --          functionTypeParameters = true,
-        --          parameterNames = true,
-        --          rangeVariableTypes = true,
-        --        },
-        --      },
-        --    },
-        --  }
-        --end,
+        -- ["gopls"] = function()
+        --   local lspconfig = require "lspconfig"
+        --   lspconfig.gopls.setup {
+        --     capabilities = capabilities,
+        --     settings = {
+        --       gopls = {
+        --         hints = {
+        --           assignVariableTypes = true,
+        --           compositeLiteralFields = true,
+        --           compositeLiteralTypes = true,
+        --           constantValues = true,
+        --           functionTypeParameters = true,
+        --           parameterNames = true,
+        --           rangeVariableTypes = true,
+        --         },
+        --       },
+        --     },
+        --   }
+        -- end,
+
+        ["ts_ls"] = function()
+          local lspconfig = require "lspconfig"
+          lspconfig.ts_ls.setup {
+            capabilities = capabilities,
+            server_capabilities = {
+              documentFormattingProvider = false,
+            },
+          }
+        end,
 
         ["jsonls"] = function()
           local lspconfig = require "lspconfig"
