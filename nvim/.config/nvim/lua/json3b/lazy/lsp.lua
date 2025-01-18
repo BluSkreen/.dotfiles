@@ -2,7 +2,8 @@ return {
   "neovim/nvim-lspconfig",
   dependencies = {
     "folke/neodev.nvim",
-    "VonHeikemen/lsp-zero.nvim",
+    -- "mfussenegger/nvim-dap",
+    -- "VonHeikemen/lsp-zero.nvim",
     "williamboman/mason.nvim",
     "williamboman/mason-lspconfig.nvim",
     "hrsh7th/cmp-nvim-lsp",
@@ -17,16 +18,27 @@ return {
     "stevearc/conform.nvim",
     -- Schema information
     "b0o/SchemaStore.nvim",
+    -- "jay-babu/mason-nvim-dap.nvim",
+  },
+
+  opts = {
+    servers = {
+      ruby_lsp = {
+        mason = false,
+        cmd = { vim.fn.expand("~/.rbenv/shims/ruby-lsp") },
+      },
+    },
   },
 
   config = function()
+
     -- vim.lsp.set_log_level("debug")
 
     require("neodev").setup {
-      -- library = {
-      --   plugins = { "nvim-dap-ui" },
-      --   types = true,
-      -- },
+      library = {
+        plugins = { "nvim-dap-ui" },
+        types = true,
+      },
     }
 
     local cmp_lsp = require "cmp_nvim_lsp"
@@ -36,26 +48,52 @@ return {
     require("fidget").setup {}
 
     require("mason").setup {}
+
+    -- -- require("mason-nvim-dap").setup()
+    -- require ('mason-nvim-dap').setup({
+    --     ensure_installed = {'stylua', 'jq'},
+    --     handlers = {
+    --         function(config)
+    --           -- all sources with no handler get passed here
+
+    --           -- Keep original functionality
+    --           require('mason-nvim-dap').default_setup(config)
+    --         end,
+    --         -- python = function(config)
+    --         --     config.adapters = {
+    --         --       type = "executable",
+    --         --       command = "/usr/bin/python3",
+    --         --       args = {
+    --         --         "-m",
+    --         --         "debugpy.adapter",
+    --         --       },
+    --         --     }
+    --         --     require('mason-nvim-dap').default_setup(config) -- don't forget this!
+    --         -- end,
+    --     },
+    -- })
+
     require("mason-lspconfig").setup {
       ensure_installed = {
         -- "stylua",
         "lua_ls",
-        "tsserver",
+        "ts_ls",
         "tailwindcss",
         "cssls",
         "html",
-        "ruby_lsp",
+        -- "ruby_lsp",
         "rust_analyzer",
         "gopls",
         "clangd",
-        "yamlls",
+        -- "clang-format",
+        -- "codelldb",
         "bashls",
         "svelte",
         "jsonls",
         "yamlls",
         -- "ocamllsp",
-        "lexical",
-        "elixirls",
+        -- "lexical",
+        -- "elixirls",
       },
       handlers = {
         function(server_name)
@@ -79,98 +117,53 @@ return {
           }
         end,
 
-        ["ruby_lsp"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.ruby_lsp.setup {
-            capabilities = capabilities,
-            formatting = false,
-            server_capabilities = {
-              documentFormattingProvider = false,
-            },
-          }
-          -- vim.print(lspconfig.ruby_lsp)
-        end,
+        --["tailwindcss"] = function()
+        --  local lspconfig = require "lspconfig"
+        --  lspconfig.tailwindcss.setup {
+        --    capabilities = capabilities,
+        --    settings = {
+        --      tailwindCSS = {
+        --        includeLanguages = {
+        --          haml = "html",
+        --        },
+        --        --experimental = {
+        --        --  classRegex = {
+        --        --    { 'class: ?"([^"]*)"',             "([a-zA-Z0-9\\-:]+)" },
+        --        --    { "(\\.[\\w\\-.]+)[\\n\\=\\{\\s]", "([\\w\\-]+)" },
+        --        --  },
+        --        --  --experimental = {
+        --        --  --  classRegex = {  -- for haml :D
+        --        --  --    "%\\w+([^\\s]*)",
+        --        --  --    "\\.([^\\.]*)",
+        --        --  --    ":class\\s*=>\\s*\"([^\"]*)",
+        --        --  --    "class:\\s+\"([^\"]*)"
+        --        --  --  }
+        --        --  --}
+        --        --},
+        --      },
+        --    },
+        --  }
+        --end,
 
-        -- ["rubocop"] = function()
-        --   local lspconfig = require "lspconfig"
-        --   lspconfig.rubocop.setup {
-        --     capabilities = capabilities,
-        --     cmd = { "rubocop", "--lsp" },
-        --     root_dir = lspconfig.util.root_pattern("Gemfile", ".git"),
-        --   }
-        --   -- vim.print(lspconfig.rubocop)
-        -- end,
-
-        -- ["sorbet"] = function()
-        -- 	local lspconfig = require("lspconfig")
-        -- 	lspconfig.sorbet.setup({
-        -- 		capabilities = capabilities,
-        -- 		root_dir = lspconfig.util.root_pattern("Gemfile", ".git"),
-        -- 		cmd = { "srb", "tc", "--lsp", "--dir=" .. vim.fn.getcwd() },
-        -- 		init_options = {
-        -- 			highlightUntyped = true,
-        -- 		},
-        -- 	})
-        -- 	-- vim.print(lspconfig.sorbet)
-        -- end,
-
-        ["tailwindcss"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.tailwindcss.setup {
-            capabilities = capabilities,
-            settings = {
-              tailwindCSS = {
-                includeLanguages = {
-                  haml = "html",
-                },
-                experimental = {
-                  classRegex = {
-                    { 'class: ?"([^"]*)"',             "([a-zA-Z0-9\\-:]+)" },
-                    { "(\\.[\\w\\-.]+)[\\n\\=\\{\\s]", "([\\w\\-]+)" },
-                  },
-                  --experimental = {
-                  --  classRegex = {  -- for haml :D
-                  --    "%\\w+([^\\s]*)",
-                  --    "\\.([^\\.]*)",
-                  --    ":class\\s*=>\\s*\"([^\"]*)",
-                  --    "class:\\s+\"([^\"]*)"
-                  --  }
-                  --}
-                },
-              },
-            },
-          }
-        end,
-
-        ["gopls"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.gopls.setup {
-            capabilities = capabilities,
-            settings = {
-              gopls = {
-                hints = {
-                  assignVariableTypes = true,
-                  compositeLiteralFields = true,
-                  compositeLiteralTypes = true,
-                  constantValues = true,
-                  functionTypeParameters = true,
-                  parameterNames = true,
-                  rangeVariableTypes = true,
-                },
-              },
-            },
-          }
-        end,
-
-        ["tsserver"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.tsserver.setup {
-            capabilities = capabilities,
-            server_capabilities = {
-              documentFormattingProvider = false,
-            },
-          }
-        end,
+        --["gopls"] = function()
+        --  local lspconfig = require "lspconfig"
+        --  lspconfig.gopls.setup {
+        --    capabilities = capabilities,
+        --    settings = {
+        --      gopls = {
+        --        hints = {
+        --          assignVariableTypes = true,
+        --          compositeLiteralFields = true,
+        --          compositeLiteralTypes = true,
+        --          constantValues = true,
+        --          functionTypeParameters = true,
+        --          parameterNames = true,
+        --          rangeVariableTypes = true,
+        --        },
+        --      },
+        --    },
+        --  }
+        --end,
 
         ["jsonls"] = function()
           local lspconfig = require "lspconfig"
@@ -201,66 +194,112 @@ return {
           }
         end,
 
-        -- ["ocamllsp"] = function()
-        --   local lspconfig = require "lspconfig"
-        --   lspconfig.ocamllsp.setup {
-        --     capabilities = capabilities,
-        --     manual_install = true,
-        --     settings = {
-        --       codelens = { enable = true },
-        --       inlayHints = { enable = true },
-        --     },
-
-        --     filetypes = {
-        --       "ocaml",
-        --       "ocaml.interface",
-        --       "ocaml.menhir",
-        --       "ocaml.cram",
-        --     },
-
-        --     -- TODO: Check if i still need the filtypes stuff i had before
-        --   }
-        -- end,
-
-        ["elixirls"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.elixirls.setup {
-            capabilities = capabilities,
-            cmd = { "/home/tjdevries/.local/share/nvim/mason/bin/elixir-ls" },
-            root_dir = require("lspconfig.util").root_pattern { "mix.exs" },
-            server_capabilities = {
-              -- completionProvider = true,
-              -- definitionProvider = false,
-              documentFormattingProvider = false,
-            },
-          }
-        end,
-
-        ["lexical"] = function()
-          local lspconfig = require "lspconfig"
-          lspconfig.lexical.setup {
-            capabilities = capabilities,
-            cmd = { "/home/tjdevries/.local/share/nvim/mason/bin/lexical", "server" },
-            root_dir = require("lspconfig.util").root_pattern { "mix.exs" },
-            server_capabilities = {
-              completionProvider = vim.NIL,
-              definitionProvider = false,
-            },
-          }
-        end,
-
         ["clangd"] = function()
           local lspconfig = require "lspconfig"
           lspconfig.clangd.setup {
             capabilities = capabilities,
-            -- TODO: Could include cmd, but not sure those were all relevant flags.
-            init_options = { clangdFileStatus = true },
-            filetypes = { "c", "cpp" },
-            --    looks like something i would have added while i was floundering
+            cmd = { 'clangd', '--background-index', '--clang-tidy', '--log=verbose' },
+            -- init_options = { clangdFileStatus = true },
+            init_options = {
+              fallbackFlags = { '-std=c++17' },
+            },
+            -- filetypes = { "c", "cpp" },
           }
         end,
       },
     }
+
+    local lspconfig = require "lspconfig"
+
+    -- lspconfig["clangd"].setup {
+    --   capabilities = capabilities,
+    --   cmd = { 'clangd', '--background-index', '--clang-tidy', '--log=verbose' },
+    --   -- init_options = { clangdFileStatus = true },
+    --   init_options = {
+    --     fallbackFlags = { '-std=c++17' },
+    --   },
+    --   -- filetypes = { "c", "cpp" },
+    -- }
+
+    local function add_ruby_deps_command(client, bufnr)
+      vim.api.nvim_buf_create_user_command(bufnr, "ShowRubyDeps", function(opts)
+        local params = vim.lsp.util.make_text_document_params()
+        local showAll = opts.args == "all"
+
+        client.request("rubyLsp/workspace/dependencies", params, function(error, result)
+          if error then
+            print("Error showing deps: " .. error)
+            return
+          end
+
+          local qf_list = {}
+          for _, item in ipairs(result) do
+            if showAll or item.dependency then
+              table.insert(qf_list, {
+                text = string.format("%s (%s) - %s", item.name, item.version, item.dependency),
+                filename = item.path
+              })
+            end
+          end
+
+          vim.fn.setqflist(qf_list)
+          vim.cmd('copen')
+        end, bufnr)
+      end,
+      {nargs = "?", complete = function() return {"all"} end})
+    end
+
+    -- lspconfig["ruby_lsp"].setup {
+    --   on_attach = function(client, buffer)
+    --     add_ruby_deps_command(client, buffer)
+    --   end,
+    --   capabilities = capabilities,
+    --   mason = false,
+    --   init_options = {
+    --     enabledFeatures = {
+    --       codeActions = true,
+    --       codeLens = true,
+    --       completion = true,
+    --       definition = true,
+    --       diagnostics = true,
+    --       documentHighlights = true,
+    --       documentLink = true,
+    --       documentSymbols = true,
+    --       foldingRanges = true,
+    --       formatting = true,
+    --       hover = true,
+    --       inlayHint = true,
+    --       onTypeFormatting = true,
+    --       selectionRanges = true,
+    --       semanticHighlighting = true,
+    --       signatureHelp = true,
+    --       typeHierarchy = true,
+    --       workspaceSymbol = true
+    --     },
+    --     -- formatter = 'standard',
+    --     -- linters = { },
+    --   },
+    --   formatting = false,
+    --   server_capabilities = {
+    --     documentFormattingProvider = false,
+    --   },
+    --   cmd = { vim.fn.expand("~/.rbenv/shims/ruby-lsp") },
+    -- }
+
+    -- lspconfig["rubocop"].setup {
+    --   capabilities = capabilities,
+    --   cmd = { "bundle", "exec", "rubocop", "--lsp" },
+    -- }
+
+    -- ["rubocop"] = function()
+    --   local lspconfig = require "lspconfig"
+    --   lspconfig.rubocop.setup {
+    --     capabilities = capabilities,
+    --     cmd = { "rubocop", "--lsp" },
+    --     root_dir = lspconfig.util.root_pattern("Gemfile", ".git"),
+    --   }
+    --   -- vim.print(lspconfig.rubocop)
+    -- end,
 
     local cmp = require "cmp"
     local cmp_select = { behavior = cmp.SelectBehavior.Select }
@@ -305,8 +344,12 @@ return {
         html = { "prettier" },
         css = { "prettier" },
         json = { "prettier" },
-        ruby = { "ruby_lsp" },
+        ruby = { "rubocop" },
       },
+      -- init = function()
+      --   -- If you want the formatexpr, here is the place to set it
+      --   vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+      -- end,
     }
 
     vim.api.nvim_create_user_command("Format", function(args)

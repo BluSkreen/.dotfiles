@@ -8,7 +8,8 @@ return {
         keymaps = {
           ["<C-h>"] = false,
           ["<C-t>"] = false,
-          ["<M-h>"] = "actions.select_split",
+          ["<leader>h"] = { "actions.select", opts = { horizontal = true }, desc = "Open the entry in a horizontal split" },
+          ["<leader>v"] = { "actions.select", opts = { vertical = true }, desc = "Open the entry in a vertical split" },
         },
         view_options = {
           show_hidden = true,

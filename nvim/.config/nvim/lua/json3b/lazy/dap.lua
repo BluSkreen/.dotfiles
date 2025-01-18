@@ -6,6 +6,7 @@ return {
       "theHamsta/nvim-dap-virtual-text",
       "nvim-neotest/nvim-nio",
       "williamboman/mason.nvim",
+      -- "jay-babu/mason-nvim-dap.nvim",
     },
     config = function()
       local dap = require "dap"
@@ -16,69 +17,40 @@ return {
 
       require("nvim-dap-virtual-text").setup {
         -- This just tries to mitigate the chance that I leak tokens here. Probably won't stop it from happening...
-        display_callback = function(variable)
-          local name = string.lower(variable.name)
-          local value = string.lower(variable.value)
-          if name:match "secret" or name:match "api" or value:match "secret" or value:match "api" then
-            return "*****"
-          end
+        -- display_callback = function(variable)
+        --   local name = string.lower(variable.name)
+        --   local value = string.lower(variable.value)
+        --   if name:match "secret" or name:match "api" or value:match "secret" or value:match "api" then
+        --     return "*****"
+        --   end
 
-          if #variable.value > 15 then
-            return " " .. string.sub(variable.value, 1, 15) .. "... "
-          end
+        --   if #variable.value > 15 then
+        --     return " " .. string.sub(variable.value, 1, 15) .. "... "
+        --   end
 
-          return " " .. variable.value
-        end,
+        --   return " " .. variable.value
+        -- end,
       }
 
-      -- Handled by nvim-dap-go
-      -- dap.adapters.go = {
-      --   type = "server",
-      --   port = "${port}",
-      --   executable = {
-      --     command = "dlv",
-      --     args = { "dap", "-l", "127.0.0.1:${port}" },
-      --   },
+      -- dap.adapters.chrome = {
+      --     type = "executable",
+      --     command = "node",
+      --     args = {os.getenv("HOME") .. "personal/vscode-chrome-debug/out/src/chromeDebug.js"} -- TODO adjust
       -- }
 
-      dap.adapters.chrome = {
-          type = "executable",
-          command = "node",
-          args = {os.getenv("HOME") .. "personal/vscode-chrome-debug/out/src/chromeDebug.js"} -- TODO adjust
-      }
-
-      dap.configurations.javascript = {
-          {
-              type = "chrome",
-              request = "attach",
-              program = "${file}",
-              cwd = vim.fn.getcwd(),
-              sourceMaps = true,
-              protocol = "inspector",
-              port = 9222,
-              webRoot = "${workspaceFolder}"
-          }
-      }
-
-      -- local elixir_ls_debugger = vim.fn.exepath "elixir-ls-debugger"
-      -- if elixir_ls_debugger ~= "" then
-      --   dap.adapters.mix_task = {
-      --     type = "executable",
-      --     command = elixir_ls_debugger,
-      --   }
-
-      --   dap.configurations.elixir = {
+      -- dap.configurations.javascript = {
       --     {
-      --       type = "mix_task",
-      --       name = "phoenix server",
-      --       task = "phx.server",
-      --       request = "launch",
-      --       projectDir = "${workspaceFolder}",
-      --       exitAfterTaskReturns = false,
-      --       debugAutoInterpretAllModules = false,
-      --     },
-      --   }
-      -- end
+      --         type = "chrome",
+      --         request = "attach",
+      --         program = "${file}",
+      --         cwd = vim.fn.getcwd(),
+      --         sourceMaps = true,
+      --         protocol = "inspector",
+      --         port = 9222,
+      --         webRoot = "${workspaceFolder}"
+      --     }
+      -- }
+
 
       vim.keymap.set("n", "<space>b", dap.toggle_breakpoint)
       vim.keymap.set("n", "<space>gb", dap.run_to_cursor)

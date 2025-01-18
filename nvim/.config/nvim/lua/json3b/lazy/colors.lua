@@ -33,6 +33,8 @@ return {
           hl.LineNr = { fg = "#96bccc" }
         end
       })
+
+      ColorMyPencils()
     end
   },
 

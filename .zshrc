@@ -105,13 +105,21 @@ source $ZSH/oh-my-zsh.sh
 # opam configuration
 [[ ! -r /Users/bluescreen/.opam/opam-init/init.zsh ]] || source /Users/bluescreen/.opam/opam-init/init.zsh  > /dev/null 2> /dev/null
 
-export PATH="/usr/local/opt/postgresql@14/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
+
+# Tauri Android dev
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export NDK_HOME="$ANDROID_HOME/ndk/$(ls -1 $ANDROID_HOME/ndk)"
 
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
+export PATH="/usr/local/opt/postgresql@14/bin:$PATH"
+
+# Added by `rbenv init` on Thu Sep  5 13:18:53 MDT 2024
+export PATH="$HOME/.rbenv/bin:$PATH"
+eval "$(rbenv init - --no-rehash zsh)"
 # Add RVM to PATH for scripting. Make sure this is the last PATH variable change.
-export PATH="$PATH:$HOME/.rvm/bin"
-export PATH="/usr/local/opt/openssl/bin:$PATH"
-source ~/.rvm/scripts/rvm
+# export PATH="$PATH:$HOME/.rvm/bin"
