@@ -64,6 +64,14 @@ outer.top =        10
 outer.right =      10
 
 [workspace-to-monitor-force-assignment]
+
+# 1 = 1                            # Monitor sequence number from left to right. 1-based indexing
+# 2 = 'main'                       # Main monitor
+# 3 = 'secondary'                  # Non-main monitor in case when there are only two monitors
+# 4 = 'built-in'                   # Case insensitive regex substring
+# 5 = '^built-in retina display$'  # Case insensitive regex match
+# 6 = ['secondary', 'dell']        # You can specify multiple patterns.
+#                                  #   The first matching pattern will be used
 1 = 'main'
 2 = 'main'
 3 = 'main'
@@ -73,11 +81,16 @@ outer.right =      10
 7 = 'main'
 8 = 'main'
 9 = 'main'
-A = 'secondary'
-S = 'secondary'
-D = 'secondary'
-F = 'secondary'
-G = 'secondary'
+A = 'built-in'
+S = 'built-in'
+D = 'built-in'
+F = 'built-in'
+G = 'built-in'
+Y = ['dell', 'secondary']
+U = ['dell', 'secondary']
+I = ['dell', 'secondary']
+O = ['dell', 'secondary']
+P = ['dell', 'secondary']
 
 # 'main' binding mode declaration
 # See: https://nikitabobko.github.io/AeroSpace/guide#binding-modes
