@@ -221,33 +221,33 @@ return {
     --   -- filetypes = { "c", "cpp" },
     -- }
 
-    local function add_ruby_deps_command(client, bufnr)
-      vim.api.nvim_buf_create_user_command(bufnr, "ShowRubyDeps", function(opts)
-        local params = vim.lsp.util.make_text_document_params()
-        local showAll = opts.args == "all"
+    -- local function add_ruby_deps_command(client, bufnr)
+    --   vim.api.nvim_buf_create_user_command(bufnr, "ShowRubyDeps", function(opts)
+    --     local params = vim.lsp.util.make_text_document_params()
+    --     local showAll = opts.args == "all"
 
-        client.request("rubyLsp/workspace/dependencies", params, function(error, result)
-          if error then
-            print("Error showing deps: " .. error)
-            return
-          end
+    --     client.request("rubyLsp/workspace/dependencies", params, function(error, result)
+    --       if error then
+    --         print("Error showing deps: " .. error)
+    --         return
+    --       end
 
-          local qf_list = {}
-          for _, item in ipairs(result) do
-            if showAll or item.dependency then
-              table.insert(qf_list, {
-                text = string.format("%s (%s) - %s", item.name, item.version, item.dependency),
-                filename = item.path
-              })
-            end
-          end
+    --       local qf_list = {}
+    --       for _, item in ipairs(result) do
+    --         if showAll or item.dependency then
+    --           table.insert(qf_list, {
+    --             text = string.format("%s (%s) - %s", item.name, item.version, item.dependency),
+    --             filename = item.path
+    --           })
+    --         end
+    --       end
 
-          vim.fn.setqflist(qf_list)
-          vim.cmd('copen')
-        end, bufnr)
-      end,
-      {nargs = "?", complete = function() return {"all"} end})
-    end
+    --       vim.fn.setqflist(qf_list)
+    --       vim.cmd('copen')
+    --     end, bufnr)
+    --   end,
+    --   {nargs = "?", complete = function() return {"all"} end})
+    -- end
 
     -- lspconfig["ruby_lsp"].setup {
     --   on_attach = function(client, buffer)
@@ -329,7 +329,7 @@ return {
         ["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
         -- ["<C-y>"] = cmp.mapping.confirm { select = true },
         -- confirm completion item
-        ["<Enter>"] = cmp.mapping.confirm { select = true },
+        ["<C-Enter>"] = cmp.mapping.confirm { select = true },
 
         -- trigger completion menu
         ["<C-Space>"] = cmp.mapping.complete(),

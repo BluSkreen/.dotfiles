@@ -51,6 +51,54 @@ return {
       --     }
       -- }
 
+      local bin_locations = vim.fn.stdpath("data") .. "/mason/bin/"
+      vim.print(bin_locations)
+      dap.adapters.codelldb = {
+        -- type = 'executable',
+        -- attach = {
+        --   pidProperty = "pid",
+        --   pidSelect = "ask"
+        -- },
+        -- command = 'lldb',
+        -- env = {
+        --   LLDB_LAUNCH_FLAG_LAUNCH_IN_TTY = "YES"
+        -- },
+        -- name = "lldb"
+        type = "server",
+        port = 13000,
+        host = "127.0.0.1",
+        executable = {
+        command = bin_locations .. "codelldb",
+        args = { "--port", 13000 },
+        },
+      }
+
+      dap.configurations.cpp = {
+        {
+          -- name = "lldb",
+          -- type = "cpp",
+          -- request = "launch",
+          -- program = function()
+          --   return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+          -- end,
+          -- cwd = '${workspaceFolder}',
+          -- externalTerminal = false,
+          -- stopOnEntry = false,
+          -- args = {}
+          --
+          -- name = "Launch file",
+          type = "codelldb",
+          request = "launch",
+          program = function()
+            return vim.fn.input("Path to executable: ", vim.fn.getcwd() .. "/", "file")
+          end,
+          cwd = "${workspaceFolder}",
+          externalTerminal = false,
+          stopOnEntry = false,
+          runInTerminal = false,
+        },
+      }
+
 
       vim.keymap.set("n", "<space>b", dap.toggle_breakpoint)
       vim.keymap.set("n", "<space>gb", dap.run_to_cursor)
