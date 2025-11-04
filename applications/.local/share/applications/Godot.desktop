@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Godot Engine
+GenericName=Game engine
+Comment=2D and 3D game engine
+Exec=/home/jso/Godot/Godot_v4.5.1-stable_linux.x86_64 --quiet
+Icon=/home/jso/Godot/icon.png
+Terminal=false
+Categories=Development;IDE;
