@@ -16,6 +16,8 @@ return {
     "j-hui/fidget.nvim",
     -- Autoformatting
     "stevearc/conform.nvim",
+    -- add LazyVim and import its plugins
+    -- { "LazyVim/LazyVim", import = "lazyvim.plugins" },
     -- Schema information
     "b0o/SchemaStore.nvim",
     -- "jay-babu/mason-nvim-dap.nvim",
@@ -82,8 +84,8 @@ return {
         "cssls",
         "html",
         -- "ruby_lsp",
-        "rust_analyzer",
-        "gopls",
+        -- "rust_analyzer",
+        -- "gopls",
         "clangd",
         -- "clang-format",
         -- "codelldb",
