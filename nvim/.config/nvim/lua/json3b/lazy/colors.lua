@@ -1,5 +1,5 @@
 function ColorMyPencils(color)
-  color = color or "tokyonight"
+  color = color or "everforest"
   vim.cmd.colorscheme(color)
 
   vim.api.nvim_set_hl(0, "Normal", { bg = "none" })
@@ -7,6 +7,18 @@ function ColorMyPencils(color)
 end
 
 return {
+  {
+    'sainnhe/everforest',
+    name = "everforest",
+    lazy = false,
+    priority = 1000,
+    config = function()
+      -- Optionally configure and load the colorscheme
+      -- directly inside the plugin declaration.
+      vim.g.everforest_enable_italic = true
+      vim.cmd.colorscheme('everforest')
+    end
+  },
   {
     "folke/tokyonight.nvim",
     name = "tokyonight",

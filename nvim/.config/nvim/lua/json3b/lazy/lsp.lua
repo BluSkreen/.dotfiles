@@ -331,7 +331,8 @@ return {
         ["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
         -- ["<C-y>"] = cmp.mapping.confirm { select = true },
         -- confirm completion item
-        ["<C-Enter>"] = cmp.mapping.confirm { select = true },
+        -- ["<C-Enter>"] = cmp.mapping.confirm { select = true },
+        ["<Tab>"] = cmp.mapping.confirm { select = true },
 
         -- trigger completion menu
         ["<C-Space>"] = cmp.mapping.complete(),
