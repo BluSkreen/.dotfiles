@@ -1,0 +1,4 @@
+Import this in the slack appearence->custom-theme menu
+Evergreen:
+#434F55,#D3C6AA,#A7C080,#E67E80
+w/darker highlight #434F55,#5E584B,#A7C080,#E67E80

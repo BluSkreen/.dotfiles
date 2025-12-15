@@ -12,26 +12,29 @@ return {
       local dap = require "dap"
       local ui = require "dapui"
 
-      require("dapui").setup()
-      -- require("dap-go").setup()
+      require("dapui").setup({
+        layouts = {
+          {
+            elements = {
+              "scopes",
+              "breakpoints",
+              "stacks",
+              "watches",
+            },
+            size = 40,
+            position = "left",
+          },
+          {
+            elements = {
+              { id = "disassembly", size = 0.7 },
+            },
+            size = 20,
+            position = "bottom",
+          },
+        },
+      })
 
-      require("nvim-dap-virtual-text").setup {
-        -- This just tries to mitigate the chance that I leak tokens here. Probably won't stop it from happening...
-        -- display_callback = function(variable)
-        --   local name = string.lower(variable.name)
-        --   local value = string.lower(variable.value)
-        --   if name:match "secret" or name:match "api" or value:match "secret" or value:match "api" then
-        --     return "*****"
-        --   end
-
-        --   if #variable.value > 15 then
-        --     return " " .. string.sub(variable.value, 1, 15) .. "... "
-        --   end
-
-        --   return " " .. variable.value
-        -- end,
-      }
-
+      require("nvim-dap-virtual-text").setup()
       -- dap.adapters.chrome = {
       --     type = "executable",
       --     command = "node",
@@ -87,6 +90,7 @@ return {
           -- args = {}
           --
           -- name = "Launch file",
+          name = "Launch C/C++ program",
           type = "codelldb",
           request = "launch",
           program = function()
@@ -98,6 +102,7 @@ return {
           runInTerminal = false,
         },
       }
+      dap.configurations.c = dap.configurations.cpp
 
 
       vim.keymap.set("n", "<space>b", dap.toggle_breakpoint)
