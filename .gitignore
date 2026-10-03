@@ -1,2 +1,5 @@
 packer_compiled.lua
 .DS_Store
+bin/.local/bin/claude
+bin/.local/bin/DecentSampler
+*.bak

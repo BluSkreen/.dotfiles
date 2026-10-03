@@ -1,0 +1,5 @@
+#!/bin/sh
+# Force system Python so Carla finds pacman's PyQt5 (mise shadows python3).
+# See: ModuleNotFoundError: No module named 'PyQt5'
+export PATH="/usr/bin:$PATH"
+exec /usr/bin/carla-settings "$@"

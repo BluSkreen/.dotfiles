@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Snapshot every tmux session/window/pane layout, plus the Claude Code session running in each pane,
+# so tmux-restore can rebuild it and `claude --resume` each conversation.
+#   tmux-save          save now
+#   tmux-save --quiet  no output (for the timer)
+set -euo pipefail
+
+DIR="${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessions"
+KEEP=100
+quiet=false; [[ ${1:-} == --quiet ]] && quiet=true
+
+# No server (e.g. after a reboot) -> don't overwrite the last good snapshot with nothing.
+tmux ls &>/dev/null || { $quiet || echo "tmux isn't running; nothing saved."; exit 0; }
+mkdir -p "$DIR"
+
+# Claude Code writes ~/.claude/sessions/<pid>.json with the session id and the tmux pane it runs in.
+# (Internal file, not a documented API; if a Claude update changes it, panes fall back to the picker.)
+claude_info() {  # $1 = pane id like %5  ->  "sessionId<TAB>cwd" or nothing
+  local f pid
+  for f in ~/.claude/sessions/*.json; do
+    [[ -e $f ]] || continue
+    pid=$(basename "$f" .json)
+    kill -0 "$pid" 2>/dev/null || continue
+    jq -r --arg p "$1" 'select((.tmux // "") | endswith("." + $p)) | "\(.sessionId)\t\(.cwd)"' "$f" 2>/dev/null
+  done | head -1
+}
+
+panes_json() {
+  tmux list-panes -a -F '#{session_name}	#{window_index}	#{window_layout}	#{window_width}	#{window_height}	#{window_active}	#{pane_index}	#{pane_id}	#{pane_pid}	#{pane_active}	#{pane_current_path}	#{pane_current_command}' |
+  while IFS=$'\t' read -r sess win layout w h wact pidx pid ppid pact cwd cmd; do
+    # Full command line of whatever is running in the pane's shell (e.g. "nvim ." or "pnpm dev").
+    args=$(ps -o args= --ppid "$ppid" 2>/dev/null | head -1 || true)
+    claude_id=""; claude_cwd=""
+    if [[ $cmd == claude || $args == claude* ]]; then
+      IFS=$'\t' read -r claude_id claude_cwd < <(claude_info "$pid") || true
+    fi
+    jq -nc --arg sess "$sess" --argjson win "$win" --arg layout "$layout" --argjson w "$w" --argjson h "$h" \
+      --argjson wact "$wact" --argjson pidx "$pidx" --argjson pact "$pact" --arg cwd "$cwd" \
+      --arg cmd "$cmd" --arg args "$args" --arg cid "$claude_id" --arg ccwd "$claude_cwd" \
+      '{sess:$sess, win:$win, layout:$layout, w:$w, h:$h, wact:($wact==1), pidx:$pidx, pact:($pact==1),
+        cwd:$cwd, cmd:$cmd, args:$args, claude_id:$cid, claude_cwd:$ccwd}'
+  done
+}
+
+snapshot=$(panes_json | jq -s '{
+  saved_at: (now | todate),
+  sessions: (group_by(.sess) | map({
+    name: .[0].sess,
+    windows: (group_by(.win) | map({
+      index: .[0].win, layout: .[0].layout, width: .[0].w, height: .[0].h, active: .[0].wact,
+      panes: (sort_by(.pidx) | map({index: .pidx, active: .pact, cwd, cmd, args, claude_id, claude_cwd}))
+    }))
+  }))
+}')
+
+# Skip writing if nothing changed since the last snapshot (keeps history meaningful).
+latest="$DIR/latest.json"
+if [[ -e $latest ]] && diff -q <(jq -S 'del(.saved_at)' "$latest") <(jq -S 'del(.saved_at)' <<<"$snapshot") &>/dev/null; then
+  $quiet || echo "No changes since last save ($(jq -r .saved_at "$latest"))."
+  exit 0
+fi
+
+file="$DIR/$(date +%Y-%m-%d_%H-%M-%S).json"
+printf '%s\n' "$snapshot" > "$file"
+ln -sfn "$(basename "$file")" "$latest"
+ls -1t "$DIR"/20*.json | tail -n +$((KEEP + 1)) | xargs -r rm --
+
+if ! $quiet; then
+  jq -r '"Saved \(.sessions | length) sessions, \([.sessions[].windows[].panes[] | select(.claude_id != "")] | length) Claude conversations"' "$file"
+  jq -r '.sessions[] | .name as $s | .windows[] | .index as $w | .panes[] |
+    "  \($s):\($w).\(.index)  " + (if .claude_id != "" then "claude --resume \(.claude_id)" else (.args // .cmd) end)' "$file"
+  echo "-> $file"
+fi

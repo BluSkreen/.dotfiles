@@ -1,0 +1,10 @@
+[Unit]
+Description=Snapshot tmux sessions every 10 minutes
+
+[Timer]
+# Wait after login so a fresh, empty tmux doesn't become the newest snapshot before you restore.
+OnStartupSec=15min
+OnUnitActiveSec=10min
+
+[Install]
+WantedBy=timers.target
