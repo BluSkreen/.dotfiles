@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Rebuild tmux sessions from a tmux-save snapshot and resume each Claude conversation.
+#   tmux-restore            restore the latest snapshot
+#   tmux-restore -l         list snapshots
+#   tmux-restore <file|N>   restore a specific snapshot (N = number from -l)
+# Sessions that already exist are left alone, so it's safe to run twice.
+set -euo pipefail
+
+DIR="${XDG_STATE_HOME:-$HOME/.local/state}/tmux-sessions"
+
+list() {
+  local i=0 f
+  for f in $(ls -1t "$DIR"/20*.json 2>/dev/null); do
+    i=$((i + 1))
+    jq -r --arg i "$i" '"\($i | (" " * (3 - length)) + .)  \(.saved_at)  \(.sessions | length) sessions, \([.sessions[].windows[].panes[] | select(.claude_id != "")] | length) claude  [\(.sessions | map(.name) | join(", "))]"' "$f"
+  done
+}
+
+case "${1:-}" in
+  -l|--list) list; exit 0 ;;
+  "") file="$DIR/latest.json" ;;
+  *[!0-9]*) file="$1" ;;
+  *) file=$(ls -1t "$DIR"/20*.json | sed -n "${1}p") ;;
+esac
+[[ -e $file ]] || { echo "No snapshot found ($file). Run tmux-save first, or tmux-restore -l." >&2; exit 1; }
+echo "Restoring snapshot from $(jq -r .saved_at "$file")"
+
+# What to type into each pane once it exists.
+pane_command() {  # $1 = pane json  ->  prints "<enter|noenter>\t<command>"
+  jq -r '
+    if .claude_id != "" then "enter\tclaude --resume \(.claude_id)"
+    elif .cmd == "claude" or (.args | startswith("claude")) then "enter\tclaude --resume"   # id unknown -> picker
+    elif (.args | test("^n?vim( |$)")) then "enter\t\(.args)"
+    elif .args != "" then "noenter\t\(.args | sub("^(/usr)?/bin/(ba)?sh "; ""))"   # dev servers etc.: typed but not run, press Enter yourself
+    else "none\t" end' <<<"$1"
+}
+
+first_restored=""
+while read -r sess; do
+  name=$(jq -r .name <<<"$sess")
+  if tmux has-session -t "=$name" 2>/dev/null; then
+    echo "  skip  $name (already running)"
+    continue
+  fi
+
+  win_count=$(jq '.windows | length' <<<"$sess")
+  for ((wi = 0; wi < win_count; wi++)); do
+    win=$(jq -c ".windows[$wi]" <<<"$sess")
+    idx=$(jq -r .index <<<"$win")
+    pane_count=$(jq '.panes | length' <<<"$win")
+
+    # Each pane starts in its own directory; Claude panes start where that conversation was started,
+    # because `claude --resume <id>` looks the conversation up by directory.
+    pane_dir() { jq -r ".panes[$1] | if .claude_cwd != \"\" then .claude_cwd else .cwd end" <<<"$win"; }
+
+    dir0=$(pane_dir 0); [[ -d $dir0 ]] || dir0=$HOME
+    if ((wi == 0)); then
+      tmux new-session -d -s "$name" -x "$(jq .width <<<"$win")" -y "$(jq .height <<<"$win")" -c "$dir0"
+      # new-session uses base-index for its first window; move it if the saved index differs.
+      first=$(tmux list-windows -t "=$name" -F '#{window_index}' | head -1)
+      [[ $first != "$idx" ]] && tmux move-window -s "=$name:$first" -t "=$name:$idx"
+    else
+      tmux new-window -d -t "=$name:$idx" -c "$dir0"
+    fi
+
+    for ((pi = 1; pi < pane_count; pi++)); do
+      d=$(pane_dir "$pi"); [[ -d $d ]] || d=$HOME
+      tmux split-window -d -t "=$name:$idx" -c "$d"
+      tmux select-layout -t "=$name:$idx" tiled >/dev/null   # keep room for the next split
+    done
+    tmux select-layout -t "=$name:$idx" "$(jq -r .layout <<<"$win")" >/dev/null 2>&1 || true
+
+    for ((pi = 0; pi < pane_count; pi++)); do
+      pane=$(jq -c ".panes[$pi]" <<<"$win")
+      target="=$name:$idx.$(tmux list-panes -t "=$name:$idx" -F '#{pane_index}' | sed -n "$((pi + 1))p")"
+      IFS=$'\t' read -r mode cmd < <(pane_command "$pane") || true
+      case $mode in
+        enter)   tmux send-keys -t "$target" "$cmd" Enter ;;
+        noenter) tmux send-keys -t "$target" "$cmd" ;;
+      esac
+      [[ $(jq -r .active <<<"$pane") == true ]] && tmux select-pane -t "$target"
+    done
+    [[ $(jq -r .active <<<"$win") == true ]] && tmux select-window -t "=$name:$idx"
+  done
+
+  echo "  ok    $name ($win_count windows)"
+  first_restored=${first_restored:-$name}
+done < <(jq -c '.sessions[]' "$file")
+
+[[ -z $first_restored ]] && exit 0
+if [[ -z ${TMUX:-} && -t 1 ]]; then
+  exec tmux attach -t "=$first_restored"
+fi
+echo "Done. Switch with: prefix s"

@@ -1,0 +1,6 @@
+[Unit]
+Description=Snapshot tmux sessions and Claude conversations
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/tmux-save --quiet
