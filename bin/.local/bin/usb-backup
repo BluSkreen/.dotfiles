@@ -39,7 +39,7 @@ esac
 
 dest="$drive/backup"
 stamp=$(date +%Y-%m-%d_%H%M)
-mkdir -p "$dest"
+((${#dry[@]})) || mkdir -p "$dest"
 
 # --- What to back up: source path -> folder name on the drive
 sources=(
