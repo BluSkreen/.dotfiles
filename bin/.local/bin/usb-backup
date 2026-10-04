@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# Mirror the important, irreplaceable stuff to the USB drive as plain, browsable files.
+#   usb-backup                 back up to the drive that has a .usb-backup marker
+#   usb-backup /run/media/...  back up to that drive (first run: creates the marker)
+#   usb-backup -n [path]       dry run: show what would change, copy nothing
+#
+# It's a mirror, so files deleted here get removed from the drive too. Anything removed
+# or overwritten is moved to <drive>/backup/.replaced/<date>/ instead of being lost.
+# Clear old dates out of .replaced/ yourself when the drive fills up.
+set -euo pipefail
+
+dry=(); [[ ${1:-} == -n ]] && { dry=(--dry-run); shift; }
+
+# --- Find the drive
+if [[ -n ${1:-} ]]; then
+  drive=${1%/}
+  [[ -d $drive ]] || { echo "Not a directory: $drive" >&2; exit 1; }
+  [[ -e $drive/.usb-backup ]] || { echo "Marking $drive as your backup drive."; touch "$drive/.usb-backup"; }
+else
+  drive=$(dirname "$(ls -d /run/media/"$USER"/*/.usb-backup 2>/dev/null | head -1)" 2>/dev/null || true)
+  [[ -n $drive && $drive != . ]] || {
+    echo "No backup drive found. Plug it in, then the first time run: usb-backup /run/media/$USER/<drive-name>" >&2
+    exit 1; }
+fi
+
+# exFAT/FAT can't store Linux permissions or symlinks; ext4/btrfs/xfs keep everything.
+fs=$(findmnt -no FSTYPE --target "$drive")
+case $fs in
+  ext4|btrfs|xfs) opts=(-a) ;;
+  *) opts=(-rtD --modify-window=2); echo "Note: $drive is $fs, so permissions and symlinks aren't kept. ext4 is better." ;;
+esac
+
+dest="$drive/backup"
+stamp=$(date +%Y-%m-%d_%H%M)
+mkdir -p "$dest"
+
+# --- What to back up: source path -> folder name on the drive
+sources=(
+  "$HOME/personal"                     "home/personal"          # notes, RAM vault, finance, resumes, all code projects
+  "$HOME/Projects"                     "home/Projects"
+  "$HOME/job-search"                   "home/job-search"
+  "$HOME/Documents"                    "home/Documents"         # REAPER projects live here
+  "$HOME/Desktop"                      "home/Desktop"
+  "$HOME/Pictures"                     "home/Pictures"
+  "$HOME/Calibre Library"              "home/Calibre Library"
+  "$HOME/audio"                        "home/audio"             # low-latency audio notes + qpwgraph patchbays
+  "$HOME/Zomboid"                      "home/Zomboid"
+  "$HOME/My Games"                     "home/My Games"
+  "$HOME/.dotfiles"                    "home/.dotfiles"
+  "$HOME/Dropbox/Documents"            "dropbox/Documents"
+  "$HOME/Dropbox/taxes"                "dropbox/taxes"
+  "$HOME/Dropbox/Hobbies"              "dropbox/Hobbies"
+  "$HOME/Dropbox/Books"                "dropbox/Books"
+  "$HOME/Dropbox/phone-stuff"          "dropbox/phone-stuff"
+  "$HOME/Dropbox/work-backup"          "dropbox/work-backup"
+  "$HOME/Dropbox/omarchy-migration"    "dropbox/omarchy-migration"
+)
+# Rebuildable or re-downloadable: skipped to keep the backup small and fast.
+excludes=(
+  --exclude node_modules --exclude 'build/' --exclude 'build-*/' --exclude 'target/' --exclude 'dist/'
+  --exclude '.cache/'
+  # Leading / = relative to each source folder, so these only hit the migration kit's copies:
+  --exclude '/audio/SFZ-Libraries/' --exclude '/audio/opt-REAPER/'
+  --exclude '/home-extras/'      # duplicates of the home/ folders above
+)
+
+echo "Backing up to $dest ${dry:+(DRY RUN)}"
+for ((i = 0; i < ${#sources[@]}; i += 2)); do
+  src=${sources[i]} name=${sources[i + 1]}
+  [[ -d $src ]] || { printf '  %-30s missing, skipped\n' "$name"; continue; }
+  ((${#dry[@]})) || mkdir -p "$dest/$name"
+  changed=$(rsync "${opts[@]}" "${dry[@]}" --delete --backup --backup-dir="$dest/.replaced/$stamp/$name" \
+              "${excludes[@]}" --out-format='%n' "$src/" "$dest/$name/" | grep -vc '/$' || true)
+  printf '  %-30s %s files changed\n' "$name" "$changed"
+done
+
+if ((${#dry[@]} == 0)); then
+  date '+%F %T' > "$dest/.last-backup"
+  sync
+  echo "Done: $(du -sh "$dest" --exclude=.replaced | cut -f1) backed up, $(df -h --output=avail "$drive" | tail -1 | xargs) free on the drive."
+  echo "Safe to unplug once the drive's light stops blinking (or eject it from the file manager)."
+fi
