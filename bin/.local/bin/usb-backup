@@ -15,7 +15,14 @@ dry=(); [[ ${1:-} == -n ]] && { dry=(--dry-run); shift; }
 if [[ -n ${1:-} ]]; then
   drive=${1%/}
   [[ -d $drive ]] || { echo "Not a directory: $drive" >&2; exit 1; }
-  [[ -e $drive/.usb-backup ]] || { echo "Marking $drive as your backup drive."; touch "$drive/.usb-backup"; }
+  if [[ ! -e $drive/.usb-backup ]]; then
+    # First run on this drive: never take over a 'backup' folder that holds your own files.
+    if [[ -e $drive/backup ]]; then
+      echo "$drive already has a 'backup' folder that usb-backup didn't create. Rename it first, then re-run." >&2
+      exit 1
+    fi
+    ((${#dry[@]})) || { echo "Marking $drive as your backup drive."; touch "$drive/.usb-backup"; }
+  fi
 else
   drive=$(dirname "$(ls -d /run/media/"$USER"/*/.usb-backup 2>/dev/null | head -1)" 2>/dev/null || true)
   [[ -n $drive && $drive != . ]] || {
