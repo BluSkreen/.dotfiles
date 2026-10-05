@@ -55,7 +55,6 @@ return {
       -- }
 
       local bin_locations = vim.fn.stdpath("data") .. "/mason/bin/"
-      vim.print(bin_locations)
       dap.adapters.codelldb = {
         -- type = 'executable',
         -- attach = {
