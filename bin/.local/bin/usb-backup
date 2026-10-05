@@ -44,7 +44,7 @@ stamp=$(date +%Y-%m-%d_%H%M)
 # --- What to back up: source path -> folder name on the drive
 sources=(
   "$HOME/personal"                     "home/personal"          # notes, RAM vault, finance, resumes, all code projects
-  "$HOME/Projects"                     "home/Projects"
+  # ~/Projects is a symlink to ~/personal/projects (Omarchy creates it), so it is covered above
   "$HOME/job-search"                   "home/job-search"
   "$HOME/Documents"                    "home/Documents"         # REAPER projects live here
   "$HOME/Desktop"                      "home/Desktop"
