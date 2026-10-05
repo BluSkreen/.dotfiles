@@ -16,12 +16,13 @@ return {
       -- Optionally configure and load the colorscheme
       -- directly inside the plugin declaration.
       vim.g.everforest_enable_italic = true
-      vim.cmd.colorscheme('everforest')
+      ColorMyPencils("everforest")
     end
   },
   {
     "folke/tokyonight.nvim",
     name = "tokyonight",
+    lazy = true,
     config = function()
       require("tokyonight").setup({
         -- your configuration comes here
@@ -45,14 +46,13 @@ return {
           hl.LineNr = { fg = "#96bccc" }
         end
       })
-
-      ColorMyPencils()
     end
   },
 
   {
     "rose-pine/neovim",
     name = "rose-pine",
+    lazy = true,
     config = function()
       require('rose-pine').setup({
         disable_background = true,
@@ -60,10 +60,6 @@ return {
           italic = false,
         },
       })
-
-      vim.cmd("colorscheme rose-pine")
-
-      ColorMyPencils()
     end
   },
 

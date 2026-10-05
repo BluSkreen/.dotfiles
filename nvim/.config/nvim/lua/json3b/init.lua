@@ -23,7 +23,7 @@ autocmd('TextYankPost', {
   group = yank_group,
   pattern = '*',
   callback = function()
-    vim.highlight.on_yank({
+    vim.hl.on_yank({
       higroup = 'IncSearch',
       timeout = 40,
     })
@@ -53,8 +53,6 @@ autocmd('LspAttach', {
 })
 
 vim.keymap.set("n", "<leader>vd", vim.diagnostic.open_float)
-vim.keymap.set("n", "[d", vim.diagnostic.goto_next)
-vim.keymap.set("n", "]d", vim.diagnostic.goto_prev)
 
 vim.g.netrw_browse_split = 0
 vim.g.netrw_banner = 0
