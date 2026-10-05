@@ -1,0 +1,175 @@
+#!/usr/bin/env python3
+"""Rebuild a tmux-save snapshot inside herdr and resume each Claude conversation.
+
+  herdr-restore            restore the latest snapshot
+  herdr-restore -l         list snapshots
+  herdr-restore <file|N>   restore a specific snapshot (N = number from -l)
+  herdr-restore -n ...     dry run: print what would be created
+
+tmux session -> herdr workspace (same label), window -> tab, panes -> splits with the same
+proportions. Claude panes run `claude --resume <id>` from the conversation's directory, nvim panes
+reopen, other commands are typed but not run (press Enter yourself). Workspaces whose label already
+exists are skipped, so it's safe to run twice. Targets the running herdr session (HERDR_SESSION
+selects a named one).
+"""
+import glob
+import json
+import os
+import re
+import subprocess
+import sys
+
+STATE = os.path.join(os.environ.get("XDG_STATE_HOME", os.path.expanduser("~/.local/state")), "tmux-sessions")
+HOME = os.path.expanduser("~")
+dry = False
+
+
+def snapshots():
+    return sorted(glob.glob(os.path.join(STATE, "20*.json")), key=os.path.getmtime, reverse=True)
+
+
+def herdr(*args):
+    if dry:
+        print("    herdr " + " ".join(repr(a) if " " in a else a for a in args))
+        return {}
+    out = subprocess.run(["herdr", *args], capture_output=True, text=True)
+    if out.returncode != 0:
+        sys.exit(f"herdr {' '.join(args)} failed: {out.stderr.strip() or out.stdout.strip()}")
+    return json.loads(out.stdout or "{}").get("result", {})
+
+
+# --- tmux layout string -> tree ------------------------------------------------------------
+# Leaf: "WxH,X,Y,ID"   Split: "WxH,X,Y{child,child}" (side by side) or "[child,child]" (stacked)
+def parse_layout(s):
+    s = re.sub(r"^[0-9a-f]{4},", "", s)  # drop checksum
+    pos = 0
+
+    def node():
+        nonlocal pos
+        m = re.compile(r"(\d+)x(\d+),(\d+),(\d+)").match(s, pos)
+        w, h = int(m.group(1)), int(m.group(2))
+        pos = m.end()
+        if pos < len(s) and s[pos] in "{[":
+            kind = "right" if s[pos] == "{" else "down"
+            close = "}" if s[pos] == "{" else "]"
+            pos += 1
+            kids = [node()]
+            while s[pos] == ",":
+                pos += 1
+                kids.append(node())
+            assert s[pos] == close
+            pos += 1
+            return {"w": w, "h": h, "split": kind, "kids": kids}
+        m = re.compile(r",(\d+)").match(s, pos)
+        pos = m.end()
+        return {"w": w, "h": h}
+
+    return node()
+
+
+def leaves(n):
+    return [n] if "kids" not in n else [l for k in n["kids"] for l in leaves(k)]
+
+
+# --- per-pane helpers ----------------------------------------------------------------------
+def pane_dir(p):
+    d = p.get("claude_cwd") or p.get("cwd") or HOME
+    return d if os.path.isdir(d) else HOME
+
+
+def pane_command(p):
+    args = p.get("args", "")
+    if p.get("claude_id"):
+        return "run", f"claude --resume {p['claude_id']}"
+    if p.get("cmd") == "claude" or args.startswith("claude"):
+        return "run", "claude --resume"  # id unknown -> picker
+    if re.match(r"^n?vim( |$)", args):
+        return "run", args
+    if args:
+        cmd = re.sub(r"^(/usr)?/bin/(ba)?sh ", "", args)  # dev servers etc.
+        return "type", re.sub(r"^\S*/(pnpm|npm|npx|node|bun)\b", r"\1", cmd)  # old install paths -> PATH
+    return None, None
+
+
+def build(node, pane_id, panes, start=0):
+    """Split pane_id to match node; node's leaves are panes[start:start+len(leaves(node))]."""
+    if "kids" not in node:
+        panes[start]["herdr_pane"] = pane_id
+        return
+    kids = node["kids"]
+    size = (lambda k: k["w"]) if node["split"] == "right" else (lambda k: k["h"])
+    firsts = [start]  # index of each child's first pane
+    for k in kids[:-1]:
+        firsts.append(firsts[-1] + len(leaves(k)))
+    remaining = pane_id
+    for i in range(len(kids) - 1):
+        ratio = size(kids[i]) / sum(size(k) for k in kids[i:])
+        # the new pane starts where the first pane of the next child lives
+        new = herdr("pane", "split", remaining, "--direction", node["split"], "--ratio", f"{ratio:.3f}",
+                    "--cwd", pane_dir(panes[firsts[i + 1]]), "--no-focus").get("pane", {}).get("pane_id", f"<new-{firsts[i + 1]}>")
+        build(kids[i], remaining, panes, firsts[i])
+        remaining = new
+    build(kids[-1], remaining, panes, firsts[-1])
+
+
+def main():
+    global dry
+    argv = sys.argv[1:]
+    if argv[:1] == ["-n"]:
+        dry, argv = True, argv[1:]
+    arg = argv[0] if argv else ""
+    if arg in ("-l", "--list"):
+        for n, f in enumerate(snapshots(), 1):
+            d = json.load(open(f))
+            claude = sum(1 for s in d["sessions"] for w in s["windows"] for p in w["panes"] if p.get("claude_id"))
+            print(f"{n:>3}  {d['saved_at']}  {len(d['sessions'])} sessions, {claude} claude  "
+                  f"[{', '.join(s['name'] for s in d['sessions'])}]")
+        return
+    if not arg:
+        f = os.path.join(STATE, "latest.json")
+    elif arg.isdigit():
+        f = snapshots()[int(arg) - 1]
+    else:
+        f = arg
+    if not os.path.exists(f):
+        sys.exit(f"No snapshot found ({f}). Run tmux-save first, or herdr-restore -l.")
+    snap = json.load(open(f))
+    print(f"Restoring snapshot from {snap['saved_at']} into herdr{' (dry run)' if dry else ''}")
+
+    existing = set()
+    if not dry:
+        existing = {w.get("label") for w in herdr("workspace", "list").get("workspaces", [])}
+
+    for sess in snap["sessions"]:
+        name = sess["name"]
+        if name in existing:
+            print(f"  skip  {name} (workspace already exists)")
+            continue
+        ws = None
+        for wi, win in enumerate(sess["windows"]):
+            panes = win["panes"]
+            dir0 = pane_dir(panes[0])
+            if wi == 0:
+                r = herdr("workspace", "create", "--cwd", dir0, "--label", name, "--no-focus")
+                ws = r.get("workspace", {}).get("workspace_id", "<ws>")
+            else:
+                r = herdr("tab", "create", "--workspace", ws, "--cwd", dir0, "--no-focus")
+            root = r.get("root_pane", {}).get("pane_id", "<root>")
+
+            tree = parse_layout(win.get("layout", ""))
+            if len(leaves(tree)) != len(panes):  # layout doesn't match pane list: just tile left to right
+                tree = {"w": 1, "h": 1, "split": "right", "kids": [{"w": 1, "h": 1} for _ in panes]}
+            build(tree, root, panes)
+
+            for p in panes:
+                mode, cmd = pane_command(p)
+                if mode == "run":
+                    herdr("pane", "run", p["herdr_pane"], cmd)
+                elif mode == "type":
+                    herdr("pane", "send-text", p["herdr_pane"], cmd)
+        print(f"  ok    {name} ({len(sess['windows'])} tabs)")
+    print("Done. Claude may ask once per folder whether you trust it.")
+
+
+if __name__ == "__main__":
+    main()
