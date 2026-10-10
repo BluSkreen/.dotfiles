@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Open the Hold the Ford herdr workspace (modeled on herdr-socketpoker).
+#
+#   One tab "hold-the-ford":  nvim . (45%)  |  claude (55%, a FRESH session)
+#
+# Usage:
+#   herdr-hold-the-ford                   fresh Claude session (default model)
+#   herdr-hold-the-ford --model sonnet    extra args are passed to claude
+#   herdr-hold-the-ford --resume          pick an earlier conversation instead
+#
+# If a workspace labeled "hold-the-ford" already exists, it is focused instead.
+# Run it from inside herdr (it talks to the running herdr session).
+set -euo pipefail
+
+DIR="$HOME/personal/projects/hold-the-ford"
+LABEL="hold-the-ford"
+CLAUDE_CMD="claude${*:+ $*}"
+
+existing=$(herdr workspace list | jq -r --arg l "$LABEL" \
+  '.result.workspaces[] | select(.label == $l) | .workspace_id' | head -n1)
+if [[ -n "$existing" ]]; then
+  herdr workspace focus "$existing" >/dev/null
+  echo "Workspace '$LABEL' already exists; focused it."
+  exit 0
+fi
+
+# Editor | Claude
+ws_json=$(herdr workspace create --cwd "$DIR" --label "$LABEL" --no-focus)
+ws=$(jq -r '.result.workspace.workspace_id' <<<"$ws_json")
+tab1=$(jq -r '.result.tab.tab_id' <<<"$ws_json")
+editor=$(jq -r '.result.root_pane.pane_id' <<<"$ws_json")
+herdr tab rename "$tab1" "$LABEL" >/dev/null
+
+claude_pane=$(herdr pane split --pane "$editor" --direction right --ratio 0.45 \
+  --cwd "$DIR" --no-focus | jq -r '.result.pane.pane_id')
+
+herdr pane run "$editor" "nvim ." >/dev/null
+herdr pane run "$claude_pane" "$CLAUDE_CMD" >/dev/null
+
+herdr workspace focus "$ws" >/dev/null
+echo "Created workspace '$LABEL' (Claude: $CLAUDE_CMD)."

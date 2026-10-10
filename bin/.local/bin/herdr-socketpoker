@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Recreate the socketpoker herdr workspace (layout saved 2026-10-05).
+#
+#   Tab 1 "socketpoker":  nvim . (45%)  |  claude --resume (55%)
+#   Tab 2:                shell (top 75%)    |  shell (50%)
+#                         shell (bottom 25%) |
+#
+# If a workspace labeled "socketpoker" already exists, it is focused instead.
+# Run it from inside herdr (it talks to the running herdr session).
+set -euo pipefail
+
+DIR="$HOME/personal/projects/socketpoker"
+LABEL="socketpoker"
+
+existing=$(herdr workspace list | jq -r --arg l "$LABEL" \
+  '.result.workspaces[] | select(.label == $l) | .workspace_id' | head -n1)
+if [[ -n "$existing" ]]; then
+  herdr workspace focus "$existing" >/dev/null
+  echo "Workspace '$LABEL' already exists; focused it."
+  exit 0
+fi
+
+# Tab 1: editor | Claude
+ws_json=$(herdr workspace create --cwd "$DIR" --label "$LABEL" --no-focus)
+ws=$(jq -r '.result.workspace.workspace_id' <<<"$ws_json")
+tab1=$(jq -r '.result.tab.tab_id' <<<"$ws_json")
+editor=$(jq -r '.result.root_pane.pane_id' <<<"$ws_json")
+herdr tab rename "$tab1" "$LABEL" >/dev/null
+
+claude_pane=$(herdr pane split --pane "$editor" --direction right --ratio 0.45 \
+  --cwd "$DIR" --no-focus | jq -r '.result.pane.pane_id')
+
+herdr pane run "$editor" "nvim ." >/dev/null
+herdr pane run "$claude_pane" "claude --resume" >/dev/null
+
+# Tab 2: two stacked shells | one shell
+tab2_json=$(herdr tab create --workspace "$ws" --cwd "$DIR" --no-focus)
+top_left=$(jq -r '.result.root_pane.pane_id' <<<"$tab2_json")
+herdr pane split --pane "$top_left" --direction right --ratio 0.5 \
+  --cwd "$DIR" --no-focus >/dev/null
+herdr pane split --pane "$top_left" --direction down --ratio 0.75 \
+  --cwd "$DIR" --no-focus >/dev/null
+
+# Land on tab 1
+herdr tab focus "$tab1" >/dev/null
+herdr workspace focus "$ws" >/dev/null
+echo "Created workspace '$LABEL'."
