@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Write the Carla wrappers into ~/.local/bin, so Carla runs on system Python and finds pacman's PyQt5
+# (mise shadows python3 -> ModuleNotFoundError: No module named 'PyQt5').
+#
+#   carla-wrappers           write (or rewrite) them all
+#
+# Each wrapper is a tiny script named after the Carla tool it runs, e.g. ~/.local/bin/carla-rack.
+# Re-run it any time; it overwrites the old wrappers (and any stow symlinks left from before).
+set -euo pipefail
+
+DEST="$HOME/.local/bin"
+TOOLS=(carla carla-control carla-database carla-jack-multi carla-jack-single
+       carla-osc-gui carla-patchbay carla-rack carla-settings)
+
+mkdir -p "$DEST"
+for tool in "${TOOLS[@]}"; do
+  [[ -x /usr/bin/$tool ]] || { echo "  $tool: not installed in /usr/bin, skipped"; continue; }
+  # rm first: writing through an old stow symlink would write into the dotfiles repo instead.
+  rm -f "$DEST/$tool"
+  cat > "$DEST/$tool" <<EOF
+#!/bin/sh
+# Written by carla-wrappers. Force system Python so Carla finds pacman's PyQt5 (mise shadows python3).
+export PATH="/usr/bin:\$PATH"
+exec /usr/bin/$tool "\$@"
+EOF
+  chmod +x "$DEST/$tool"
+  echo "  wrote $DEST/$tool"
+done
