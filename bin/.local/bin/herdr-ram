@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Open the RAM (planning vault) herdr workspace (modeled on herdr-socketpoker, layout from 2026-10-12).
+#
+#   One tab "RAM":  claude --resume in ~/personal/RAM (35%)  |  claude --resume in ~ (job tracker, 65%)
+#
+# If a workspace labeled "RAM" already exists, it is focused instead.
+# Run it from inside herdr (it talks to the running herdr session).
+set -euo pipefail
+
+DIR="$HOME/personal/RAM"
+JOB_DIR="$HOME"   # the job tracker Claude session was started in ~
+LABEL="RAM"
+
+existing=$(herdr workspace list | jq -r --arg l "$LABEL" \
+  '.result.workspaces[] | select(.label == $l) | .workspace_id' | head -n1)
+if [[ -n "$existing" ]]; then
+  herdr workspace focus "$existing" >/dev/null
+  echo "Workspace '$LABEL' already exists; focused it."
+  exit 0
+fi
+
+# Planning Claude | job tracker Claude
+ws_json=$(herdr workspace create --cwd "$DIR" --label "$LABEL" --no-focus)
+ws=$(jq -r '.result.workspace.workspace_id' <<<"$ws_json")
+tab1=$(jq -r '.result.tab.tab_id' <<<"$ws_json")
+planner=$(jq -r '.result.root_pane.pane_id' <<<"$ws_json")
+herdr tab rename "$tab1" "$LABEL" >/dev/null
+
+jobs_pane=$(herdr pane split --pane "$planner" --direction right --ratio 0.35 \
+  --cwd "$JOB_DIR" --no-focus | jq -r '.result.pane.pane_id')
+
+herdr pane run "$planner" "claude --resume" >/dev/null
+herdr pane run "$jobs_pane" "claude --resume" >/dev/null
+
+# Land on the planning pane
+herdr workspace focus "$ws" >/dev/null
+echo "Created workspace '$LABEL'."
